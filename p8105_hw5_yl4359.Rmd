@@ -5,10 +5,19 @@ output: github_document
 ---
 
 ```{r setup, include=FALSE}
-knitr::opts_chunk$set(echo = TRUE)
-
 library(tidyverse)
+
 set.seed(10)
+
+knitr::opts_chunk$set(
+  echo = TRUE,
+  fig.width = 6,
+  fig.asp = .6,
+  out.width = "90%")
+
+theme_set(theme_bw() + 
+            theme(legend.position = "bottom") + 
+            theme(plot.title = element_text(hjust = 0.5)))
 ```
 
 # Problem 1
@@ -20,6 +29,7 @@ iris_with_missing = iris %>%
 ```
 
 ## Write a function 
+
 ```{r}
 replace_na = function(vec){
   new_vec = c()
@@ -49,5 +59,36 @@ replace_na = function(vec){
 iris_without_missing = map_dfr(iris_with_missing, replace_na)
 ```
 
+# Problem 2
 
+## Construct a new dataframe
 
+```{r}
+file_name = list.files(path = "./data")
+data_path = str_c("./data/", file_name)
+value = map_df(data_path, read_csv)
+data = cbind(file_name, value)
+```
+
+## Tidy the dataset
+
+```{r}
+new_data = data %>% 
+  separate(file_name, into = c("group", "id"), sep = "_") %>% 
+  mutate(id = str_replace(id, ".csv", "")) %>% 
+  pivot_longer(week_1:week_8, names_to = "week", values_to = "value") %>% 
+  mutate(week = str_replace(week, "week_", ""))
+```
+
+## make a plot
+
+```{r}
+new_data %>% 
+  ggplot(aes(x = week, y = value, group = id, color = id)) + 
+  geom_line() +
+  facet_grid(~group) +
+  labs(title = "Observations overtime") +
+  scale_color_hue()
+```
+
+In control group, the observation values not have large change overtime, while in experiment group, the observation values increased over time. 
